@@ -1,0 +1,12 @@
+[project]
+name = "burstgpt-tuner"
+version = "0.1.0"
+description = "DSPy agent that tunes vLLM serving configuration for BurstGPT workloads"
+requires-python = ">=3.10"
+dependencies = ["dspy==3.4.1", "pandas", "numpy", "aiohttp"]
+
+[project.optional-dependencies]
+gpu = ["vllm"]
+
+[tool.setuptools]
+packages = ["burstgpt_tuner"]

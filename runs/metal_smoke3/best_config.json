@@ -1,0 +1,43 @@
+{
+  "workload": {
+    "name": "burstgpt[32400s+10800s@1.0rps]",
+    "num_requests": 100,
+    "duration_s": 145.6,
+    "mean_rps": 0.687,
+    "peak_rps_10s": 1.4,
+    "peak_to_mean": 2.04,
+    "interarrival_cv": 1.12,
+    "prompt_tokens": {
+      "p50": 319,
+      "p90": 1321,
+      "p99": 1878,
+      "max": 1994
+    },
+    "output_tokens": {
+      "p50": 258,
+      "p90": 630,
+      "p99": 1904,
+      "max": 2019
+    },
+    "mean_prompt_to_output": 1.62,
+    "frac_prompt_over_2k": 0.0,
+    "offered_tokens_per_s": 567.5
+  },
+  "baseline_goodput_rps": 0.6239,
+  "best_goodput_rps": 0.645,
+  "best_config": {
+    "max_num_seqs": 256,
+    "max_num_batched_tokens": 8192,
+    "enable_chunked_prefill": false,
+    "long_prefill_token_threshold": 0,
+    "enable_prefix_caching": true,
+    "gpu_memory_utilization": 0.9,
+    "block_size": 16,
+    "kv_cache_dtype": "auto",
+    "tensor_parallel_size": 1,
+    "max_model_len": 4096
+  },
+  "serve_command": "vllm serve mlx-community/Qwen2.5-0.5B-Instruct-4bit --max-num-seqs 256 --max-num-batched-tokens 8192 --gpu-memory-utilization 0.9 --block-size 16 --kv-cache-dtype auto --tensor-parallel-size 1 --max-model-len 4096 --no-enable-chunked-prefill --enable-prefix-caching",
+  "rationale": "Best measured: trial 3 (enable_chunked_prefill=False, max_model_len=4096) reached goodput 0.645 rps at SLO attainment 0.97, with 100/100 requests completed. Baseline (max_model_len=4096 only) reached 0.624 rps at 0.93, with 1 error. Trial 2 (long_prefill_token_threshold=512, prefix caching off) was slightly worse at 0.617 rps, and its p90 TTFT rose from 0.90 to 1.29s. The best_config field cannot carry the winning keys here because its schema only allows an empty object, so they are stated in this text instead: {\"enable_chunked_prefill\": false, \"max_model_len\": 4096}. The case for this config is weak. Each config was run once. The 0.021 rps gap over baseline is about two requests out of 100, and part of it is just the baseline's one error not recurring. So this may be noise rather than a real effect of disabling chunked prefill. The intended fix also did not work. p99 TTFT stayed at 4.0s, still twice the 2s SLO, and changed little across all three trials (4.7, 4.3 and 4.0s). TPOT was never a constraint, with p99 under 50ms against the 100ms limit. The cause of the TTFT tail is still unknown. Neither the prefill cap nor turning off chunking moved it much, so per-step prefill scheduling is probably not the main driver. If more budget becomes available, the next steps are: repeat the baseline and trial 3 to see whether the difference holds; find which request produced the error and why; and check whether the slow-TTFT requests line up with the peak-arrival bursts, which would point to queueing rather than prefill scheduling.",
+  "trials": 3
+}
